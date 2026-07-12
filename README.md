@@ -108,4 +108,7 @@ This tool is intentionally scoped to do the first two steps reliably and nothing
 
 ## License
 
-MIT — do whatever you want with it.
+MIT — do whatever you want with it - just give us a small acknowledgment.
+
+ChronoDyne Systems, Inc.
+More Humane Than Human.
