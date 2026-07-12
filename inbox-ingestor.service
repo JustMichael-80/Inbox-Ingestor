@@ -1,0 +1,11 @@
+[Unit]
+Description=PDF Inbox Watcher — converts PDFs to Markdown on arrival
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /REPLACE/WITH/FULL/PATH/pdf_inbox_watcher.py /REPLACE/WITH/FULL/PATH/your_inbox_folder
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
