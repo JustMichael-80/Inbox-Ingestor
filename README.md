@@ -42,18 +42,28 @@ If you want it to survive reboots and start automatically, pick your OS below.
 1. Edit `com.inboxingestor.watcher.plist`, replacing the two `REPLACE_WITH_FULL_PATH_TO` placeholders with your actual paths to the script and your inbox folder.
 2. Move it into place and load it:
    ```bash
+   mkdir -p ~/Library/LaunchAgents
    mv com.inboxingestor.watcher.plist ~/Library/LaunchAgents/
-   launchctl load ~/Library/LaunchAgents/com.inboxingestor.watcher.plist
+   launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.inboxingestor.watcher.plist
    ```
+   (`launchctl load` still works on some systems but is deprecated — if it fails with `Input/output error`, use `bootstrap` as shown above instead.)
 3. Verify it's running:
    ```bash
    launchctl list | grep inboxingestor
    ```
    You should see an actual process ID (not `-`) in the output.
 
-**Common gotcha:** if your inbox folder is inside `Desktop`, `Documents`, or `Downloads`, macOS's privacy protections (TCC) will block the background process from reading it, even though it works fine when you run the script manually in Terminal. If you see `Operation not permitted` in the error log, go to **System Settings → Privacy & Security → Full Disk Access**, and add `/usr/bin/python3` (or wherever `which python3` points) to the list. Note: the Full Disk Access file picker sometimes doesn't show raw binaries — drag the file into the list from Finder instead if the picker won't cooperate.
+**Common gotcha #1 — TCC / Full Disk Access:** if your inbox folder is inside `Desktop`, `Documents`, or `Downloads`, macOS's privacy protections (TCC) will block the background process from reading it, even though it works fine when you run the script manually in Terminal. If you see `Operation not permitted` in the error log, go to **System Settings → Privacy & Security → Full Disk Access** and add your python3 binary.
 
-To stop it: `launchctl unload ~/Library/LaunchAgents/com.inboxingestor.watcher.plist`
+**Important:** find the *real* binary, not a symlink — granting FDA to a symlink silently fails to take effect. Run `which python3`, then resolve it fully:
+```bash
+ls -l "$(which python3)"
+```
+If that shows it's a symlink (common with the Xcode Command Line Tools install, e.g. `/usr/bin/python3` → `/Library/Developer/CommandLineTools/usr/bin/python3`, which is itself often another symlink into `.../Python3.framework/Versions/X.Y/bin/python3`), keep following the chain until you hit the actual file, and grant Full Disk Access to *that* path. It's also worth pointing the plist's `ProgramArguments` at this fully-resolved path directly, so there's no ambiguity about which binary launchd executes.
+
+**Common gotcha #2 — stale/quarantined plist:** if you edited the `.plist` file with a tool other than a plain text editor or `cat`/shell redirect (e.g. some GUI tools or scripted writers), it may pick up a `com.apple.provenance` extended attribute that causes `bootstrap` to fail with `Input/output error`. Check with `xattr -l ~/Library/LaunchAgents/com.inboxingestor.watcher.plist` — if anything shows up, remove it with `xattr -d com.apple.provenance ~/Library/LaunchAgents/com.inboxingestor.watcher.plist`, or just rewrite the file with `cat original.plist > ~/Library/LaunchAgents/com.inboxingestor.watcher.plist` to strip it.
+
+To stop it: `launchctl bootout gui/$(id -u)/com.inboxingestor.watcher`
 
 </details>
 
@@ -108,7 +118,8 @@ This tool is intentionally scoped to do the first two steps reliably and nothing
 
 ## License
 
-MIT — do whatever you want with it - just give us a small acknowledgment.
+MIT — do whatever you want with it, just give us an acknowledgement.
 
 ChronoDyne Systems, Inc.
+
 More Humane Than Human.
