@@ -1,0 +1,3 @@
+# Inbox Ingestor dependencies — pinned for reproducible installs
+pymupdf4llm==0.0.27
+watchdog==6.0.0
